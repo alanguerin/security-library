@@ -1,0 +1,10 @@
+# Project
+out/
+.idea/
+*.iml
+
+# Gradle
+.gradle/
+build/
+
+.java-version
