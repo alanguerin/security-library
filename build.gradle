@@ -6,10 +6,12 @@ plugins {
 }
 
 group 'com.submersive.security'
-version '1.0.0-SNAPSHOT'
 
-sourceCompatibility = JavaVersion.VERSION_11
-targetCompatibility = JavaVersion.VERSION_11
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    withSourcesJar()
+}
 
 repositories {
     mavenCentral()
@@ -17,8 +19,10 @@ repositories {
 
 dependencies {
     ext {
+        springBootVersion = '2.2.2.RELEASE'
         springSecurityVersion = '5.3.0.RELEASE'
         auth0JwtVersion = '3.10.0'
+        servletApiVersion = '4.0.1'
         jsonVersion = '20190722'
         apacheCommonsTextVersion = '1.8'
         guavaVersion = '28.1-jre'
@@ -28,14 +32,22 @@ dependencies {
         mockitoVersion = '3.2.4'
     }
 
-    implementation "org.springframework.security:spring-security-core:${springSecurityVersion}"
+    implementation "org.springframework.boot:spring-boot-starter-security:${springBootVersion}"
     implementation "com.auth0:java-jwt:${auth0JwtVersion}"
     
     implementation "org.json:json:${jsonVersion}"
     implementation "org.apache.commons:commons-text:${apacheCommonsTextVersion}"
     implementation "com.google.guava:guava:${guavaVersion}"
     implementation "com.github.javafaker:javafaker:${javaFakerVersion}"
+
+    implementation "javax.servlet:javax.servlet-api:${servletApiVersion}"
     
+    testImplementation("org.springframework.boot:spring-boot-starter-test:${springBootVersion}") {
+        exclude group: "com.vaadin.external.google", module: "android-json"
+        exclude group: "org.junit.vintage", module: "junit-vintage-engine"
+    }
+    
+    testImplementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
     testImplementation "org.springframework.security:spring-security-test:${springSecurityVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-api:${junitVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter-engine:${junitVersion}"
@@ -64,4 +76,26 @@ task integrationTest(type: Test) {
         include '**/*ITest.class'
     }
     failFast = true
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId = project.group
+            artifactId = project.name
+            
+            from components.java
+        }
+    }
+    repositories {
+        maven {
+            def releasesUrl = 's3://maven.submersive.com/releases/'
+            def snapshotsUrl = 's3://maven.submersive.com/snapshots/'
+            url = version.endsWith('SNAPSHOT') ? snapshotsUrl : releasesUrl
+            credentials(AwsCredentials) {
+                accessKey System.getenv('AWS_ACCESS_KEY_ID')
+                secretKey System.getenv('AWS_SECRET_ACCESS_KEY')
+            }
+        }
+    }
 }

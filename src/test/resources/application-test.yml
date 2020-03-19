@@ -1,0 +1,7 @@
+submersive.security:
+  enabled: true
+  token:
+    clientKey: submersive # Client key used to authorise anonymous tokens.
+    issuer: submersive.test
+    secret: coralcove123
+    

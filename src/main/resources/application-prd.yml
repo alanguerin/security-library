@@ -1,0 +1,5 @@
+submersive.security.token:
+  clientKey: submersive # Client key used to authorise anonymous tokens.
+  issuer: submersive.com
+  secret: ${JWT_SECRET}
+  

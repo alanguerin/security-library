@@ -1,0 +1,67 @@
+image: openjdk:11-slim
+clone:
+  depth: full
+
+options:
+  max-time: 10 # 10 minute timeout
+  
+unit-tests: &unit-tests
+  - step:
+      name: Unit tests
+      caches:
+        - gradle
+      script:
+        - bin/unit-tests.sh
+      artifacts:
+        - "build/reports/tests/unitTest/**"
+
+integration-tests: &integration-tests
+  - step:
+      name: Integration tests
+      caches:
+        - gradle
+      script:
+        - bin/integration-tests.sh
+      artifacts:
+        - "build/reports/tests/integrationTest/**"
+
+build: &build
+  - step:
+      name: Build
+      caches:
+        - gradle
+      script:
+        - bin/build.sh
+      artifacts:
+        - "build/libs/**"
+
+publish-snapshot: &publish-snapshot
+  - step:
+      name: Publish snapshot artifact
+      deployment: development
+      script:
+        - bin/maven-publish.sh
+
+publish-release: &publish-release
+  - step:
+      name: Publish release artifact
+      deployment: production
+      trigger: manual
+      script:
+        - bin/maven-publish.sh
+        
+pipelines:
+  default:
+    - parallel:
+        - <<: *unit-tests
+        - <<: *integration-tests
+    - <<: *build
+  branches:
+    master:
+      - parallel:
+          - <<: *unit-tests
+          - <<: *integration-tests
+      - <<: *build
+      - <<: *publish-snapshot
+      - <<: *publish-release
+        
