@@ -1,13 +1,11 @@
 package com.submersive.security.autoconfigure;
 
 import com.submersive.security.config.SecurityProperties;
-import com.submersive.security.filter.AnonymousAuthenticationFilter;
 import com.submersive.security.filter.PreAuthenticatedAuthenticationFilter;
 import lombok.AllArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AnonymousAuthenticationProvider;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,6 +13,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.userdetails.AuthenticationUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.AnonymousAuthenticationFilter;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationToken;
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedGrantedAuthoritiesUserDetailsService;
@@ -51,14 +50,6 @@ public class SecurityAutoConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     /**
-     * Defines an {@link AuthenticationProvider} to process anonymous authentication requests.
-     */
-    @Bean
-    public AuthenticationProvider anonymousAuthenticationProvider() {
-        return new AnonymousAuthenticationProvider(securityProperties.getClientKey());
-    }
-
-    /**
      * Prepares a Security filter to pre-authenticate an authenticated principal based on a provided identity token.
      * All principals authenticated through this filter will have the ROLE_USER authority.
      */
@@ -73,7 +64,7 @@ public class SecurityAutoConfiguration extends WebSecurityConfigurerAdapter {
      */
     @Bean
     public AnonymousAuthenticationFilter anonymousAuthenticationFilter() {
-        return new AnonymousAuthenticationFilter(anonymousAuthenticationProvider(), securityProperties);
+        return new AnonymousAuthenticationFilter(securityProperties.getClientKey());
     }
     
     /**
@@ -87,6 +78,8 @@ public class SecurityAutoConfiguration extends WebSecurityConfigurerAdapter {
             .sessionManagement().sessionCreationPolicy(STATELESS)
             .and()
             .csrf().disable()
+            .exceptionHandling()
+            .and()
             .addFilterAfter(preAuthenticatedAuthenticationFilter(), BasicAuthenticationFilter.class)
             .addFilterAfter(anonymousAuthenticationFilter(), PreAuthenticatedAuthenticationFilter.class)
             .authorizeRequests()

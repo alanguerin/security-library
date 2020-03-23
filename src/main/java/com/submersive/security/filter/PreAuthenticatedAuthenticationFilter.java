@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 
 /**
@@ -48,29 +49,40 @@ public class PreAuthenticatedAuthenticationFilter extends OncePerRequestFilter i
     
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        if (nonNull(SecurityContextHolder.getContext().getAuthentication())) {
+            getLogger().debug("SecurityContextHolder not populated with a pre-authenticated token, as it already contained: {}",
+                SecurityContextHolder.getContext().getAuthentication());
+
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = request.getHeader(AUTHORIZATION);
         
         // If a token has not been provided, invoke the next filter in the chain. 
         if (isNull(token)) {
+            getLogger().debug("A pre-authenticated token has not been provided, so there is nothing to authenticate.");
             filterChain.doFilter(request, response);
             return;
         }
-        
-        token = pruneAuthenticationScheme(token);
         
         try {
             JWTVerifier verifier = JWT.require(Algorithm.HMAC512(securityProperties.getSecret()))
                 .withIssuer(securityProperties.getIssuer())
                 .build();
+
+            token = pruneAuthenticationScheme(token);
             
             DecodedJWT decodedToken = verifier.verify(token);
             getLogger().info("Token verified. [subject={}]", decodedToken.getSubject());
             
             authenticate(request, decodedToken);
-            
             filterChain.doFilter(request, response);
         } catch (JWTVerificationException e) {
-            getLogger().info("Token failed verification.", e);
+            getLogger().info("Token failed verification. [{}]", e.getMessage());
+            
+            // Continue along the security filter chain, as the provided token is unusable.
+            filterChain.doFilter(request, response);
         }
     }
 
