@@ -1,5 +1,8 @@
 # Security Library
 
+> 18 April 2020: This project was originally created for [Submersive](https://github.com/submersive). I've migrated the
+> codebase from Bitbucket, where Bitbucket Pipelines was used for continuous delivery.
+
 Our security library is tasked with establishing the base security setup for our API services.
 
 The security library builds on Spring Security and is designed with Spring Boot in mind. It is auto-configurable
