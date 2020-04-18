@@ -8,6 +8,13 @@ Our security library is tasked with establishing the base security setup for our
 The security library builds on Spring Security and is designed with Spring Boot in mind. It is auto-configurable
 and the project artifact simply needs to be added to a Spring Boot application's classpath to become activated.
 
+## Build
+
+This library was for Java 11. You may build and install the library into your local Maven repository with the
+following:
+    
+    ./gradlew clean unitTest integrationTest build publishToMavenLocal -x test --info
+
 ## Authentication
 
 The security library's purpose is to secure HTTP endpoints and authenticate incoming requests.
